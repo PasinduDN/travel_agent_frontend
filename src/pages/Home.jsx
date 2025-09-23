@@ -118,7 +118,7 @@ const Home = () => {
       setQuery('');
 
       // Navigate to the dashboard and pass the API result in the state
-      navigate('/dashboard', { state: { tripData: data.result } });
+      navigate('/dashboard', { state: { tripData: data.result, query:query, location:location, start_date:startDate.format("YYYY-MM-DD"), end_date:endDate.format("YYYY-MM-DD") }});
 
     } catch (error) {
       setErrorMessage("Error connecting to backend.");

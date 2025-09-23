@@ -34,10 +34,16 @@ const TripDashboard = () => {
     const location = useLocation();
 
     const tripPlan = location.state?.tripData || "No trip plan was generated. Go back to create one!";
+    console.log("tripPlan in tripData" + location.state.tripData);
+    console.log("tripPlan in query" + location.state.query);
+    console.log("tripPlan in location" + location.state.location);
+    console.log("tripPlan in start_date" + location.state.start_date);
+    console.log("tripPlan in endDate" + location.state.endDate);
 
-    // Chat state
+    const initialAIMessage = location.state?.tripData || "No trip plan was generated. Go back to create one!";
+
     const [messages, setMessages] = useState([
-        { id: 1, sender: 'AI', text: 'Hello! How can I help you with your travel plans?' }
+        { id: 1, sender: 'AI', text: initialAIMessage }
     ]);
     const [newMessage, setNewMessage] = useState('');
 
@@ -60,24 +66,45 @@ const TripDashboard = () => {
         navigate('/');
     };
 
-    const handleSendMessage = () => {
+    const handleSendMessage = async () => {
         if (newMessage.trim()) {
             const userMessage = {
                 id: messages.length + 1,
                 sender: 'Human',
                 text: newMessage
             };
+            setMessages((prev) => [...prev, userMessage]);
 
-            const aiResponse = {
-                id: messages.length + 2,
-                sender: 'AI',
-                text: `Thank you for your message: "${newMessage}". How else can I assist you with your travel plans?`
-            };
+            try {
+                const sessionId = "demo-session"; // or generate dynamically
+                const response = await fetch(`http://127.0.0.1:8000/api/process_preferences/${sessionId}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        preferences_text: newMessage,
+                        location: location.state.location,
+                        start_date: location.state.start_date,
+                        end_date: location.state.end_date
+                    }),
+                });
 
-            setMessages([...messages, userMessage, aiResponse]);
+                const data = await response.json();
+
+                const aiMessage = {
+                    id: messages.length + 2,
+                    sender: 'AI',
+                    text: data.result
+                };
+
+                setMessages((prev) => [...prev, aiMessage]);
+            } catch (error) {
+                console.error("Error fetching AI response:", error);
+            }
+
             setNewMessage('');
         }
     };
+
 
     const handleKeyPress = (e) => {
         if (e.key === 'Enter') {
@@ -85,8 +112,11 @@ const TripDashboard = () => {
         }
     };
 
+
     return (
-        <Container maxWidth="xl" sx={{ paddingY: 4 }}>
+        // <Container maxWidth="xl" sx={{ height: '80vh', paddingY: 4 }}></Container>
+        <Container maxWidth="xl" sx={{ height: '100vh', paddingY: 4 }}>
+            <Box>
             {/* Header */}
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                 <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#2c3e50' }}>
@@ -107,6 +137,7 @@ const TripDashboard = () => {
             </Box>
 
             <Grid container spacing={2}>
+                {/* Col 01 */}
                 <Grid size={{ xs: 12, md: 4 }}>
                     <Paper
                         elevation={3}
@@ -226,6 +257,8 @@ const TripDashboard = () => {
                         </Box>
                     </Paper>
                 </Grid>
+
+                {/* Col 02 */}
                 <Grid size={{ xs: 12, md: 4 }}>
                     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 2 }}>
 
@@ -234,7 +267,7 @@ const TripDashboard = () => {
                             elevation={3}
                             sx={{
                                 padding: 2,
-                                height: '60%',
+                                height: '100%',
                                 borderRadius: 3,
                                 background: 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)',
                                 display: 'flex',
@@ -265,7 +298,7 @@ const TripDashboard = () => {
                         </Paper>
 
                         {/* Social Media Links */}
-                        <Paper
+                        {/* <Paper
                             elevation={3}
                             sx={{
                                 padding: 2,
@@ -316,9 +349,11 @@ const TripDashboard = () => {
                                     ))}
                                 </List>
                             </Box>
-                        </Paper>
+                        </Paper> */}
                     </Box>
                 </Grid>
+
+                {/* Col 03 */}
                 <Grid size={{ xs: 12, md: 4 }}>
                     <Paper
                         elevation={3}
@@ -367,7 +402,7 @@ const TripDashboard = () => {
                         </Box>
 
                         {/* Location List */}
-                        <Box sx={{
+                        {/* <Box sx={{
                             flex: 1,
                             padding: 2,
                             overflowY: 'auto',
@@ -412,13 +447,11 @@ const TripDashboard = () => {
                                     </Card>
                                 ))}
                             </Box>
-                        </Box>
+                        </Box> */}
                     </Paper>
                 </Grid>
-            </Grid>12
-
-
-
+            </Grid>
+        </Box>
         </Container>
     );
 };
