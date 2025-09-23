@@ -4,9 +4,6 @@ import Header from '../components/Header';
 import ChatBox from '../components/ChatBox';
 import QueryForm from '../components/QueryForm';
 import ButtonGroup from '@mui/material/ButtonGroup';
-import { sendPreferencesToBackend } from './sendQueryToBackend';
-import { sendPreferences } from './sendPreferences';
-import { sendQueryToBackend } from '../hooks/useApi';
 import {
   Box,
   Button,
@@ -92,7 +89,7 @@ const Home = () => {
       console.log("endDate : " + endDate.format("YYYY-MM-DD"))
       console.log("sessionId : " + sessionId);
 
-      const response = await fetch(`http://127.0.0.1:8001/api/process_preferences/${sessionId}`, {
+      const response = await fetch(`http://127.0.0.1:8000/api/process_preferences/${sessionId}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -629,18 +626,22 @@ const Home = () => {
               </Button>
 
               {step < 7 ? (
-                <Button
-                  onClick={handleNext}
-                  style={{
-                    border: 'none',
-                    color: 'white',
-                    borderRadius: 10,
-                    padding: '10px 18px',
-                    background: 'linear-gradient(135deg, #6a11cb, #2575fc)'
-                  }}
-                >
-                  Next Step →
-                </Button>
+                (step === 1 && location) ||                 // Step 1: require location
+                  (step === 2 && startDate && endDate) ||     // Step 2: require both dates
+                  (step > 2) ?
+                  (<Button
+                    onClick={handleNext}
+                    style={{
+                      border: 'none',
+                      color: 'white',
+                      borderRadius: 10,
+                      padding: '10px 18px',
+                      background: 'linear-gradient(135deg, #4688ebff, #058075ff)'
+                    }}
+                  >
+                    Next Step →
+                  </Button>
+                  ): null
               ) : (
                 <Button
                   onClick={handlePreferencesSubmit}
@@ -881,7 +882,7 @@ const Home = () => {
 
           </Box>
         </Box>
-        
+
       </Box>
     </Container>
   );
