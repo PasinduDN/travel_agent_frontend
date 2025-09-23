@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Container, Paper, TextareaAutosize } from '@mui/material';
+import { useNavigate } from 'react-router-dom'; // 1. Import useNavigate
 import Header from '../components/Header';
 import ChatBox from '../components/ChatBox';
 import QueryForm from '../components/QueryForm';
@@ -29,6 +30,7 @@ import { DateCalendar } from '@mui/x-date-pickers/DateCalendar';
 import travelPreview from '../assets/travel-preview.png';
 
 const Home = () => {
+  const navigate = useNavigate();
   // const [chatContent, setChatContent] = useState('Hello! How can I assist you with your travel plans?');
   const [language, setLanguage] = useState('English');
   const [form, setForm] = useState("");
@@ -114,6 +116,9 @@ const Home = () => {
         { sender: "AI", message: data.result }
       ]);
       setQuery('');
+
+      // Navigate to the dashboard and pass the API result in the state
+      navigate('/dashboard', { state: { tripData: data.result } });
 
     } catch (error) {
       setErrorMessage("Error connecting to backend.");
