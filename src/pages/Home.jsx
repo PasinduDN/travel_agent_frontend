@@ -28,6 +28,8 @@ import { CircularProgress } from "@mui/material";
 import Preference from '../components/Preference';
 import { DateCalendar } from '@mui/x-date-pickers/DateCalendar';
 import travelPreview from '../assets/travel-preview.png';
+import Checkbox from "@mui/material/Checkbox";
+import ListItemText from "@mui/material/ListItemText";
 
 const Home = () => {
   const navigate = useNavigate();
@@ -48,7 +50,8 @@ const Home = () => {
   const [openDateModal, setOpenDateModal] = useState(false);
   const [warningOpen, setWarningOpen] = useState(false);
 
-  const locations = ["Colombo", "Kandy", "Galle", "Nuwara Eliya", "Ella", "Sigiriya"];
+  const [locations, setLocations] = useState([]);
+  // const locations = ["Colombo", "Kandy", "Galle", "Nuwara Eliya", "Ella", "Sigiriya"];
   const [errorMessage, setErrorMessage] = useState("");
 
   const [openWizard, setOpenWizard] = useState(false);
@@ -74,22 +77,14 @@ const Home = () => {
 
   const handlePreferencesSubmit = async () => {
     setOpenWizard(false)
-    console.log("Buttion work");
 
-    if (!location || !startDate || !endDate) {
+    if (!locations || !startDate || !endDate) {
       setWarningOpen(true);
       return;
     }
-    console.log("Buttion after");
     setIsLoading(true);
 
     try {
-      console.log("try work");
-      console.log("query : " + query)
-      console.log("location : " + location)
-      console.log("startDate :" + startDate.format("YYYY-MM-DD"))
-      console.log("endDate : " + endDate.format("YYYY-MM-DD"))
-      console.log("sessionId : " + sessionId);
 
       const response = await fetch(`http://127.0.0.1:8000/api/process_preferences/${sessionId}`, {
         method: "POST",
@@ -98,7 +93,7 @@ const Home = () => {
         },
         body: JSON.stringify({
           preferences_text: query,
-          location,
+          locations: locations,
           start_date: startDate.format("YYYY-MM-DD"),
           end_date: endDate.format("YYYY-MM-DD"),
         }),
@@ -118,7 +113,15 @@ const Home = () => {
       setQuery('');
 
       // Navigate to the dashboard and pass the API result in the state
-      navigate('/dashboard', { state: { tripData: data.result, query:query, location:location, start_date:startDate.format("YYYY-MM-DD"), end_date:endDate.format("YYYY-MM-DD") }});
+      navigate('/dashboard', {
+        state: {
+          tripData: data.result,
+          query: query,
+          locations: locations,   // ✅ plural, matches backend
+          start_date: startDate.format("YYYY-MM-DD"),
+          end_date: endDate.format("YYYY-MM-DD")
+        }
+      });
 
     } catch (error) {
       setErrorMessage("Error connecting to backend.");
@@ -127,7 +130,33 @@ const Home = () => {
     setIsLoading(false);
   };
 
-
+  const districts = [
+    "Colombo",
+    "Gampaha",
+    "Kalutara",
+    "Kandy",
+    "Matale",
+    "Nuwara Eliya",
+    "Galle",
+    "Matara",
+    "Hambantota",
+    "Jaffna",
+    "Kilinochchi",
+    "Mannar",
+    "Vavuniya",
+    "Mullaitivu",
+    "Batticaloa",
+    "Ampara",
+    "Trincomalee",
+    "Kurunegala",
+    "Puttalam",
+    "Anuradhapura",
+    "Polonnaruwa",
+    "Badulla",
+    "Monaragala",
+    "Ratnapura",
+    "Kegalle"
+  ];
 
   return (
     <Container
@@ -202,7 +231,7 @@ const Home = () => {
           </Typography> */}
 
           {/* --- Location Modal --- */}
-          <Dialog open={openLocationModal} onClose={() => setOpenLocationModal(false)}>
+          {/* <Dialog open={openLocationModal} onClose={() => setOpenLocationModal(false)}>
             <DialogTitle>Select Location</DialogTitle>
             <DialogContent>
               <FormControl fullWidth sx={{ mt: 2 }}>
@@ -221,10 +250,10 @@ const Home = () => {
             <DialogActions>
               <Button onClick={() => setOpenLocationModal(false)}>Close</Button>
             </DialogActions>
-          </Dialog>
+          </Dialog> */}
 
           {/* --- Date Modal --- */}
-          <Dialog open={openDateModal} onClose={() => setOpenDateModal(false)}>
+          {/* <Dialog open={openDateModal} onClose={() => setOpenDateModal(false)}>
             <DialogTitle>Select Travel Dates</DialogTitle>
             <DialogContent sx={{ display: 'flex', gap: 2, mt: 1 }}>
               <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -245,7 +274,7 @@ const Home = () => {
             <DialogActions>
               <Button onClick={() => setOpenDateModal(false)}>Close</Button>
             </DialogActions>
-          </Dialog>
+          </Dialog> */}
 
           <Dialog
             open={openWizard}
@@ -333,27 +362,34 @@ const Home = () => {
 
               {/* Q1: Location */}
               {step === 1 && (
-                <div style={{ display: 'grid', gap: 12 }}>
-                  <Typography variant="h6" style={{ color: 'white' }}>Select Your Location</Typography>
+                <div style={{ display: "grid", gap: 12 }}>
+                  <Typography variant="h6" style={{ color: "white" }}>
+                    Select Your Location(s)
+                  </Typography>
 
                   <FormControl fullWidth>
-                    {/* label colored for dark bg */}
-                    <InputLabel style={{ color: 'rgba(255,255,255,0.85)' }}>Location</InputLabel>
+                    <InputLabel style={{ color: "rgba(255,255,255,0.85)" }}>
+                      Locations
+                    </InputLabel>
                     <Select
-                      value={location}
-                      label="Location"
-                      onChange={(e) => setLocation(e.target.value)}
+                      multiple
+                      value={locations}
+                      onChange={(e) => setLocations(e.target.value)}
+                      renderValue={(selected) => selected.join(", ")}
                       style={{
                         borderRadius: 12,
-                        background: 'rgba(255,255,255,0.08)',
-                        color: 'white'
+                        background: "rgba(255,255,255,0.08)",
+                        color: "white",
                       }}
                       MenuProps={{
-                        PaperProps: { style: { background: '#0f2a31', color: 'white' } }
+                        PaperProps: { style: { background: "#0f2a31", color: "white" } },
                       }}
                     >
-                      {locations.map(loc => (
-                        <MenuItem key={loc} value={loc}>{loc}</MenuItem>
+                      {districts.map((loc) => (
+                        <MenuItem key={loc} value={loc}>
+                          <Checkbox checked={locations.indexOf(loc) > -1} />
+                          <ListItemText primary={loc} />
+                        </MenuItem>
                       ))}
                     </Select>
                   </FormControl>
@@ -366,71 +402,101 @@ const Home = () => {
                   <Typography variant="h6" style={{ color: 'white' }}>Choose Your Travel Dates</Typography>
 
                   <LocalizationProvider dateAdapter={AdapterDayjs}>
-                    <div style={{
-                      display: 'flex',
-                      justifyContent: 'center',
-                      alignItems: 'start',
-                      gap: 24,
-                      flexWrap: 'wrap'
-                    }}>
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'start',
+                        gap: 24,
+                        flexWrap: 'wrap',
+                      }}
+                    >
                       {/* Start */}
-                      <div style={{
-                        borderRadius: 16,
-                        padding: 8,
-                        background: 'rgba(255,255,255,0.06)',
-                        border: '1px solid rgba(255,255,255,0.18)'
-                      }}>
-                        <Typography variant="body2" style={{ color: 'rgba(255,255,255,0.85)', marginBottom: 8 }}>Start</Typography>
-                        {/* <DateCalendar value={startDate} onChange={(v) => setStartDate(v)} /> */}
-                        <LocalizationProvider dateAdapter={AdapterDayjs}>
-                          <DateCalendar
-                            value={startDate}
-                            onChange={(newValue) => setStartDate(newValue)}
-                            slotProps={{
-                              day: {
-                                sx: {
-                                  color: "white",                           // make day numbers white
-                                  "&.Mui-selected": {
-                                    backgroundColor: "#2575fc",             // selected background
-                                    color: "#fff"                           // selected text white
-                                  },
-                                  "&.MuiPickersDay-today": {
-                                    border: "1px solid #00d4ff",            // highlight today
-                                  }
-                                }
-                              }
-                            }}
-                          />
-                        </LocalizationProvider>
-
+                      <div
+                        style={{
+                          borderRadius: 16,
+                          padding: 8,
+                          background: 'rgba(255,255,255,0.06)',
+                          border: '1px solid rgba(255,255,255,0.18)',
+                        }}
+                      >
+                        <Typography
+                          variant="body2"
+                          style={{
+                            color: 'rgba(255,255,255,0.85)',
+                            marginBottom: 8,
+                          }}
+                        >
+                          Start
+                        </Typography>
+                        <DateCalendar
+                          value={startDate}
+                          onChange={(newValue) => setStartDate(newValue)}
+                          slotProps={{
+                            day: {
+                              sx: {
+                                color: 'white',
+                                '&.Mui-selected': {
+                                  backgroundColor: '#2575fc',
+                                  color: '#fff',
+                                },
+                                '&.MuiPickersDay-today': {
+                                  border: '1px solid #00d4ff',
+                                },
+                              },
+                            },
+                            switchViewButton: { sx: { color: 'white' } },
+                            previousIconButton: { sx: { color: 'white' } },
+                            nextIconButton: { sx: { color: 'white' } },
+                          }}
+                        />
                       </div>
 
                       {/* End */}
-                      <div style={{
-                        borderRadius: 16,
-                        padding: 8,
-                        background: 'rgba(255,255,255,0.06)',
-                        border: '1px solid rgba(255,255,255,0.18)'
-                      }}>
-                        <Typography variant="body2" style={{ color: 'rgba(255,255,255,0.85)', marginBottom: 8 }}>End</Typography>
-                        {/* <DateCalendar value={endDate} onChange={(v) => setEndDate(v)} /> */}
+                      <div
+                        style={{
+                          borderRadius: 16,
+                          padding: 8,
+                          background: 'rgba(255,255,255,0.06)',
+                          border: '1px solid rgba(255,255,255,0.18)',
+                        }}
+                      >
+                        <Typography
+                          variant="body2"
+                          style={{
+                            color: 'rgba(255,255,255,0.85)',
+                            marginBottom: 8,
+                          }}
+                        >
+                          End
+                        </Typography>
                         <DateCalendar
                           value={endDate}
                           onChange={(newValue) => setEndDate(newValue)}
                           slotProps={{
-                            day: { sx: { color: "white" } },
-                            toolbar: { sx: { color: "white" } },
-                            switchViewButton: { sx: { color: "white" } },
-                            previousIconButton: { sx: { color: "white" } },
-                            nextIconButton: { sx: { color: "white" } }
+                            day: {
+                              sx: {
+                                color: 'white',
+                                '&.Mui-selected': {
+                                  backgroundColor: '#2575fc',
+                                  color: '#fff',
+                                },
+                                '&.MuiPickersDay-today': {
+                                  border: '1px solid #00d4ff',
+                                },
+                              },
+                            },
+                            switchViewButton: { sx: { color: 'white' } },
+                            previousIconButton: { sx: { color: 'white' } },
+                            nextIconButton: { sx: { color: 'white' } },
                           }}
                         />
-
                       </div>
                     </div>
                   </LocalizationProvider>
                 </div>
               )}
+
 
               {/* Q3: Destination */}
               {step === 3 && (
@@ -631,7 +697,7 @@ const Home = () => {
               </Button>
 
               {step < 7 ? (
-                (step === 1 && location) ||                 // Step 1: require location
+                (step === 1 && locations) ||                 // Step 1: require location
                   (step === 2 && startDate && endDate) ||     // Step 2: require both dates
                   (step > 2) ?
                   (<Button
@@ -646,7 +712,7 @@ const Home = () => {
                   >
                     Next Step →
                   </Button>
-                  ): null
+                  ) : null
               ) : (
                 <Button
                   onClick={handlePreferencesSubmit}
@@ -855,16 +921,16 @@ const Home = () => {
 
         {/* <QueryForm setChatContent={setChatContent} /> */}
 
-        {chatHistory.map((item, idx) => (
+        {/* {chatHistory.map((item, idx) => (
           <Box key={idx} sx={{ mb: 1 }}>
             <Typography variant="body2" color={item.sender === "AI" ? "primary" : "secondary"}>
               <strong>{item.sender}:</strong> {item.message}
             </Typography>
           </Box>
-        ))}
+        ))} */}
 
-        <Box component="form" mt={3} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <TextField
+        {/* <Box component="form" mt={3} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}> */}
+          {/* <TextField
             label="Ask your question"
             variant="outlined"
             value={query}
@@ -874,9 +940,9 @@ const Home = () => {
               inputComponent: TextareaAutosize,
               inputProps: { minRows: 2 }
             }}
-          />
+          /> */}
 
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+          {/* <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
             <Button
               variant="contained"
               onClick={handlePreferencesSubmit}
@@ -885,8 +951,8 @@ const Home = () => {
               {isLoading ? <CircularProgress size={24} color="inherit" /> : "Submit"}
             </Button>
 
-          </Box>
-        </Box>
+          </Box> */}
+        {/* </Box> */}
 
       </Box>
     </Container>
