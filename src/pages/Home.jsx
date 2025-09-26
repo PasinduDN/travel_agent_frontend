@@ -51,6 +51,8 @@ const Home = () => {
   const [warningOpen, setWarningOpen] = useState(false);
 
   const [locations, setLocations] = useState([]);
+  console.log("locations", locations);
+
   // const locations = ["Colombo", "Kandy", "Galle", "Nuwara Eliya", "Ella", "Sigiriya"];
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -130,6 +132,25 @@ const Home = () => {
     setIsLoading(false);
   };
 
+  const chatWithAgent = async () => {
+
+    const defaultTripData = "No trip plan was generated yet. Let's start planning your trip!";
+    const defaultLocations = ["Colombo", "Kandy"]; // Or an empty array, depending on your preference
+    const defaultStartDate = "2025-10-01";  // Default start date
+    const defaultEndDate = "2025-10-07";    // Default end date
+    const defaultQuery = "I want to visit popular places in Sri Lanka.";
+
+    navigate('/dashboard', {
+      state: {
+        tripData: defaultTripData,  // Placeholder message
+        query: defaultQuery,
+        locations: defaultLocations,  // Use default locations
+        start_date: defaultStartDate,
+        end_date: defaultEndDate
+      }
+    });
+  };
+
   const districts = [
     "Colombo",
     "Gampaha",
@@ -160,6 +181,7 @@ const Home = () => {
 
   return (
     <Container
+      maxWidth="xl"
       sx={{
         color: 'var(--primary-text-color)',
         paddingY: 4
@@ -191,6 +213,7 @@ const Home = () => {
 
           {/* CTA Button */}
           <button onClick={() => setOpenWizard(true)} className="hero-cta">Start Exploring →</button>
+          <button onClick={chatWithAgent} className="hero-cta-ai">Chat with Agent →</button>
 
           <Box mt={2}>
             <Typography variant="body2" color="var(--accent-color)">
@@ -292,444 +315,477 @@ const Home = () => {
               }
             }}
           >
-            {/* Close button row (transparent) */}
             <div style={{
-              display: 'flex',
-              justifyContent: 'flex-end',
-              padding: '10px 12px',
-              background: 'transparent'
-            }}>
-              <Button
-                onClick={() => setOpenWizard(false)}
-                style={{
-                  minWidth: 36,
-                  height: 36,
-                  padding: 0,
-                  borderRadius: 10,
-                  color: 'white',
-                  border: '1px solid rgba(255,255,255,0.25)',
-                  background: 'rgba(255,255,255,0.06)'
-                }}
-              >
-                ✕
-              </Button>
-            </div>
-
-            {/* Stepper (transparent bar, no white) */}
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '12px 22px',
-              background: 'transparent',              // << important: no white
-              gap: 12,
-              flexWrap: 'wrap'
-            }}>
-              {[1, 2, 3, 4, 5, 6, 7].map((num, i, arr) => (
-                <div key={num} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <div style={{
-                    width: 36, height: 36, borderRadius: '50%',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontWeight: 700, fontSize: 14,
-                    background: step > num ? '#27ae60' : (step === num ? '#2575fc' : '#2b5c66'),
-                    color: 'white',
-                    boxShadow: step === num ? '0 0 0 3px rgba(37,117,252,0.25)' : 'none'
-                  }}>
-                    {step > num ? `${num}✓` : num}
-                  </div>
-
-                  {/* connector line, except after last dot */}
-                  {i < arr.length - 1 && (
-                    <div style={{
-                      width: 70, height: 4, borderRadius: 2,
-                      background: step > num ? 'linear-gradient(90deg, #2ddf85, #2ddf85)'
-                        : 'linear-gradient(90deg, #1e6b73, #1e6b73)'
-                    }} />
-                  )}
-                </div>
-              ))}
-            </div>
-
-            {/* CONTENT AREA (kept one color; no inner white) */}
-            <div style={{
-              padding: '22px',
-              background: 'transparent',              // << important: no white band
-              minHeight: 320,                          // prevents jumping height
-              display: 'flex',
+              padding: '2px',
+              // background: 'transparent',
+              minHeight: 'auto',
+              maxHeight: 'calc(100vh - 120px)',  // Prevents the content from overflowing
+              overflowY: 'auto',  // Enables scroll for overflow
+              // display: 'flex',
               flexDirection: 'column',
               gap: 18
             }}>
-
-              {/* Q1: Location */}
-              {step === 1 && (
-                <div style={{ display: "grid", gap: 12 }}>
-                  <Typography variant="h6" style={{ color: "white" }}>
-                    Select Your Location(s)
-                  </Typography>
-
-                  <FormControl fullWidth>
-                    <InputLabel style={{ color: "rgba(255,255,255,0.85)" }}>
-                      Locations
-                    </InputLabel>
-                    <Select
-                      multiple
-                      value={locations}
-                      onChange={(e) => setLocations(e.target.value)}
-                      renderValue={(selected) => selected.join(", ")}
-                      style={{
-                        borderRadius: 12,
-                        background: "rgba(255,255,255,0.08)",
-                        color: "white",
-                      }}
-                      MenuProps={{
-                        PaperProps: { style: { background: "#0f2a31", color: "white" } },
-                      }}
-                    >
-                      {districts.map((loc) => (
-                        <MenuItem key={loc} value={loc}>
-                          <Checkbox checked={locations.indexOf(loc) > -1} />
-                          <ListItemText primary={loc} />
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </div>
-              )}
-
-              {/* Q2: Two inline calendars (centered) */}
-              {step === 2 && (
-                <div style={{ display: 'grid', gap: 14 }}>
-                  <Typography variant="h6" style={{ color: 'white' }}>Choose Your Travel Dates</Typography>
-
-                  <LocalizationProvider dateAdapter={AdapterDayjs}>
-                    <div
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'start',
-                        gap: 24,
-                        flexWrap: 'wrap',
-                      }}
-                    >
-                      {/* Start */}
-                      <div
-                        style={{
-                          borderRadius: 16,
-                          padding: 8,
-                          background: 'rgba(255,255,255,0.06)',
-                          border: '1px solid rgba(255,255,255,0.18)',
-                        }}
-                      >
-                        <Typography
-                          variant="body2"
-                          style={{
-                            color: 'rgba(255,255,255,0.85)',
-                            marginBottom: 8,
-                          }}
-                        >
-                          Start
-                        </Typography>
-                        <DateCalendar
-                          value={startDate}
-                          onChange={(newValue) => setStartDate(newValue)}
-                          slotProps={{
-                            day: {
-                              sx: {
-                                color: 'white',
-                                '&.Mui-selected': {
-                                  backgroundColor: '#2575fc',
-                                  color: '#fff',
-                                },
-                                '&.MuiPickersDay-today': {
-                                  border: '1px solid #00d4ff',
-                                },
-                              },
-                            },
-                            switchViewButton: { sx: { color: 'white' } },
-                            previousIconButton: { sx: { color: 'white' } },
-                            nextIconButton: { sx: { color: 'white' } },
-                          }}
-                        />
-                      </div>
-
-                      {/* End */}
-                      <div
-                        style={{
-                          borderRadius: 16,
-                          padding: 8,
-                          background: 'rgba(255,255,255,0.06)',
-                          border: '1px solid rgba(255,255,255,0.18)',
-                        }}
-                      >
-                        <Typography
-                          variant="body2"
-                          style={{
-                            color: 'rgba(255,255,255,0.85)',
-                            marginBottom: 8,
-                          }}
-                        >
-                          End
-                        </Typography>
-                        <DateCalendar
-                          value={endDate}
-                          onChange={(newValue) => setEndDate(newValue)}
-                          slotProps={{
-                            day: {
-                              sx: {
-                                color: 'white',
-                                '&.Mui-selected': {
-                                  backgroundColor: '#2575fc',
-                                  color: '#fff',
-                                },
-                                '&.MuiPickersDay-today': {
-                                  border: '1px solid #00d4ff',
-                                },
-                              },
-                            },
-                            switchViewButton: { sx: { color: 'white' } },
-                            previousIconButton: { sx: { color: 'white' } },
-                            nextIconButton: { sx: { color: 'white' } },
-                          }}
-                        />
-                      </div>
-                    </div>
-                  </LocalizationProvider>
-                </div>
-              )}
-
-
-              {/* Q3: Destination */}
-              {step === 3 && (
-                <div style={{ display: 'grid', gap: 12 }}>
-                  <Typography variant="h6" style={{ color: 'white' }}>Destination Preferences</Typography>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
-                    {["Beach", "City", "Mountains", "Historical Sites", "Adventure", "Nature & Wildlife"].map(item => {
-                      const picked = query.includes(item);
-                      return (
-                        <Button
-                          key={item}
-                          disabled={picked}
-                          onClick={() => ExtentQuestion(`I am interested in ${item}. `)}
-                          style={{
-                            flex: '1 1 45%',
-                            minWidth: 140,
-                            padding: '12px 14px',
-                            borderRadius: 12,
-                            background: picked ? '#27444a' : '#2575fc',
-                            color: 'white',
-                            textTransform: 'none'
-                          }}
-                        >
-                          {item}
-                        </Button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* Q4: Accommodation */}
-              {step === 4 && (
-                <div style={{ display: 'grid', gap: 12 }}>
-                  <Typography variant="h6" style={{ color: 'white' }}>Accommodation Preferences</Typography>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(140px,1fr))', gap: 12 }}>
-                    {["Business Travel", "Beach Resort", "Boutique Art Hotel", "Eco-Lodge", "Family-Friendly", "Budget-Friendly", "Luxury"].map(item => {
-                      const picked = query.includes(item);
-                      return (
-                        <Button
-                          key={item}
-                          disabled={picked}
-                          onClick={() => ExtentQuestion(`I prefer ${item}. `)}
-                          style={{
-                            padding: '12px 14px',
-                            borderRadius: 12,
-                            background: picked ? '#274a36' : '#27ae60',
-                            color: 'white',
-                            textTransform: 'none'
-                          }}
-                        >
-                          {item}
-                        </Button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* Q5: Food */}
-              {step === 5 && (
-                <div style={{ display: 'grid', gap: 12 }}>
-                  <Typography variant="h6" style={{ color: 'white' }}>Food Preferences</Typography>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
-                    {["Local Sri Lankan", "International", "Vegetarian", "Seafood", "Street Food"].map(item => {
-                      const picked = query.includes(item);
-                      return (
-                        <Button
-                          key={item}
-                          disabled={picked}
-                          onClick={() => ExtentQuestion(`I prefer ${item} cuisine. `)}
-                          style={{
-                            flex: '1 1 45%',
-                            minWidth: 140,
-                            padding: '12px 14px',
-                            borderRadius: 12,
-                            background: picked ? '#4a3b34' : '#ff884d',
-                            color: 'white',
-                            textTransform: 'none'
-                          }}
-                        >
-                          {item}
-                        </Button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* Q6: Activities */}
-              {step === 6 && (
-                <div style={{ display: 'grid', gap: 12 }}>
-                  <Typography variant="h6" style={{ color: 'white' }}>Activity Preferences</Typography>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
-                    {["Wildlife Safari", "Cultural Heritage", "Food & Culinary Tours", "Hiking & Nature Trails", "Water Sports", "Wellness"].map(item => {
-                      const picked = query.includes(item);
-                      return (
-                        <Button
-                          key={item}
-                          disabled={picked}
-                          onClick={() => ExtentQuestion(`I am interested in ${item}. `)}
-                          style={{
-                            flex: '1 1 45%',
-                            minWidth: 140,
-                            padding: '12px 14px',
-                            borderRadius: 12,
-                            background: picked ? '#3c2e48' : '#8e44ad',
-                            color: 'white',
-                            textTransform: 'none'
-                          }}
-                        >
-                          {item}
-                        </Button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* Q7: Weather */}
-              {step === 7 && (
-                <div style={{ display: 'grid', gap: 12 }}>
-                  <Typography variant="h6" style={{ color: 'white' }}>Weather Preferences</Typography>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(160px,1fr))', gap: 12 }}>
-                    {["Sunny & Warm", "Mild & Cool", "Avoid Rainy Areas", "Cloudy & Dry", "Cooler Temperature", "Warmer Temperature", "Moderate Temperature"].map(item => {
-                      const picked = query.includes(item);
-                      return (
-                        <Button
-                          key={item}
-                          disabled={picked}
-                          onClick={() => ExtentQuestion(`I prefer ${item} weather. `)}
-                          style={{
-                            padding: '12px 14px',
-                            borderRadius: 12,
-                            background: picked ? '#23313a' : '#34495e',
-                            color: 'white',
-                            textTransform: 'none'
-                          }}
-                        >
-                          {item}
-                        </Button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* ANSWER FIELD (visible text, no white bar) */}
-            <div style={{ padding: '0 22px 12px', background: 'transparent' }}>
-              <TextField
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                multiline
-                rows={3}
-                placeholder="Your selected preferences will appear here. You can edit or delete text."
-                variant="outlined"
-                fullWidth
-                // style the Input container
-                InputProps={{
-                  style: {
-                    background: 'rgba(255,255,255,0.08)',
-                    borderRadius: 12,
-                    border: '1px solid rgba(0,212,255,0.45)',
-                    padding: '8px 10px'
-                  }
-                }}
-                // style the actual input text (this is what fixes 'text not visible')
-                inputProps={{
-                  style: {
-                    color: 'white',
-                    lineHeight: 1.5
-                  }
-                }}
-              />
-            </div>
-
-            {/* NAVIGATION (transparent; buttons only) */}
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              padding: '12px 22px 22px',
-              background: 'transparent' // << important: no white band
-            }}>
-              <Button
-                onClick={handlePrev}
-                disabled={step === 1}
-                style={{
-                  border: '1px solid rgba(255,255,255,0.25)',
-                  color: 'white',
-                  borderRadius: 10,
-                  padding: '10px 16px',
-                  background: 'rgba(255,255,255,0.06)'
-                }}
-              >
-                ← Previous
-              </Button>
-
-              {step < 7 ? (
-                (step === 1 && locations) ||                 // Step 1: require location
-                  (step === 2 && startDate && endDate) ||     // Step 2: require both dates
-                  (step > 2) ?
-                  (<Button
-                    onClick={handleNext}
-                    style={{
-                      border: 'none',
-                      color: 'white',
-                      borderRadius: 10,
-                      padding: '10px 18px',
-                      background: 'linear-gradient(135deg, #4688ebff, #058075ff)'
-                    }}
-                  >
-                    Next Step →
-                  </Button>
-                  ) : null
-              ) : (
+              {/* Close button row (transparent) */}
+              <div style={{
+                display: 'flex',
+                justifyContent: 'flex-end',
+                padding: '10px 12px',
+                background: 'transparent'
+              }}>
                 <Button
-                  onClick={handlePreferencesSubmit}
+                  onClick={() => setOpenWizard(false)}
                   style={{
-                    border: 'none',
-                    color: '#052b22',
-                    fontWeight: 700,
+                    minWidth: 36,
+                    height: 36,
+                    padding: 0,
                     borderRadius: 10,
-                    padding: '10px 18px',
-                    background: 'linear-gradient(135deg, #43e97b, #38f9d7)'
+                    color: 'white',
+                    border: '1px solid rgba(255,255,255,0.25)',
+                    background: 'rgba(255,255,255,0.06)'
                   }}
                 >
-                  Finish ✔
+                  ✕
                 </Button>
-              )}
+              </div>
+
+              {/* Stepper (transparent bar, no white) */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '12px 22px',
+                background: 'transparent',              // << important: no white
+                gap: 12,
+                flexWrap: 'wrap'
+              }}>
+                {[1, 2, 3, 4, 5, 6, 7].map((num, i, arr) => (
+                  <div key={num} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div style={{
+                      width: 36, height: 36, borderRadius: '50%',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontWeight: 700, fontSize: 14,
+                      background: step > num ? '#27ae60' : (step === num ? '#2575fc' : '#2b5c66'),
+                      color: 'white',
+                      boxShadow: step === num ? '0 0 0 3px rgba(37,117,252,0.25)' : 'none'
+                    }}>
+                      {step > num ? `${num}` : num}
+                    </div>
+
+                    {/* connector line, except after last dot */}
+                    {i < arr.length - 1 && (
+                      <div style={{
+                        width: 70, height: 4, borderRadius: 2,
+                        background: step > num ? 'linear-gradient(90deg, #2ddf85, #2ddf85)'
+                          : 'linear-gradient(90deg, #1e6b73, #1e6b73)'
+                      }} />
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {/* CONTENT AREA (kept one color; no inner white) */}
+              <div style={{
+                padding: '22px',
+                background: 'transparent',              // << important: no white band
+                minHeight: 320,                          // prevents jumping height
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 18
+              }}>
+
+                {/* Q1: Location */}
+                {step === 1 && (
+                  <div style={{ display: "grid", gap: 12 }}>
+                    <Typography variant="h6" style={{ color: "white" }}>
+                      Select Your Location(s)
+                    </Typography>
+
+                    <FormControl fullWidth>
+                      <InputLabel style={{ color: "rgba(255,255,255,0.85)" }}>
+                        Locations
+                      </InputLabel>
+                      <Select
+                        multiple
+                        value={locations}
+                        onChange={(e) => setLocations(e.target.value)}
+                        renderValue={(selected) => selected.join(", ")}
+                        style={{
+                          borderRadius: 12,
+                          background: "rgba(255,255,255,0.08)",
+                          color: "white",
+                        }}
+                        MenuProps={{
+                          PaperProps: { style: { background: "#0f2a31", color: "white" } },
+                        }}
+                      >
+                        {districts.map((loc) => (
+                          <MenuItem key={loc} value={loc}>
+                            <Checkbox checked={locations.indexOf(loc) > -1} />
+                            <ListItemText primary={loc} />
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </div>
+                )}
+
+                {/* Q2: Two inline calendars (centered) */}
+                {step === 2 && (
+                  <div style={{ display: 'grid', gap: 14 }}>
+                    <Typography variant="h6" style={{ color: 'white' }}>Choose Your Travel Dates</Typography>
+
+                    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'center',
+                          alignItems: 'start',
+                          gap: 24,
+                          flexWrap: 'wrap',
+                        }}
+                      >
+                        {/* Start */}
+                        <div
+                          style={{
+                            borderRadius: 16,
+                            // padding: 8,
+                            background: 'rgba(255,255,255,0.06)',
+                            border: '1px solid rgba(255,255,255,0.18)',
+                            width: '100%',
+                            maxWidth: '300px', // Limit the max width for large screens
+                          }}
+                        >
+                          <Typography
+                            variant="body2"
+                            style={{
+                              color: 'rgba(255,255,255,0.85)',
+                              marginBottom: 8,
+                            }}
+                          >
+                            Start
+                          </Typography>
+                          <DateCalendar
+                            value={startDate}
+                            onChange={(newValue) => setStartDate(newValue)}
+                            slotProps={{
+                              day: {
+                                sx: {
+                                  color: 'white',
+                                  '&.Mui-selected': {
+                                    backgroundColor: '#2575fc',
+                                    color: '#fff',
+                                  },
+                                  '&.MuiPickersDay-today': {
+                                    border: '1px solid #00d4ff',
+                                  },
+                                },
+                              },
+                              switchViewButton: { sx: { color: 'white' } },
+                              previousIconButton: { sx: { color: 'white' } },
+                              nextIconButton: { sx: { color: 'white' } },
+                            }}
+                          />
+                        </div>
+
+                        {/* End */}
+                        <div
+                          style={{
+                            borderRadius: 16,
+                            // padding: 2,
+                            background: 'rgba(255,255,255,0.06)',
+                            border: '1px solid rgba(255,255,255,0.18)',
+                            width: '100%',
+                            maxWidth: '300px', // Limit the max width for large screens
+                          }}
+                        >
+                          <Typography
+                            variant="body2"
+                            style={{
+                              color: 'rgba(255,255,255,0.85)',
+                              marginBottom: 8,
+                            }}
+                          >
+                            End
+                          </Typography>
+                          <DateCalendar
+                            value={endDate}
+                            onChange={(newValue) => setEndDate(newValue)}
+                            slotProps={{
+                              day: {
+                                sx: {
+                                  color: 'white',
+                                  '&.Mui-selected': {
+                                    backgroundColor: '#2575fc',
+                                    color: '#fff',
+                                  },
+                                  '&.MuiPickersDay-today': {
+                                    border: '1px solid #00d4ff',
+                                  },
+                                },
+                              },
+                              switchViewButton: { sx: { color: 'white' } },
+                              previousIconButton: { sx: { color: 'white' } },
+                              nextIconButton: { sx: { color: 'white' } },
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </LocalizationProvider>
+                  </div>
+                )}
+
+
+                {/* Q3: Destination */}
+                {step === 3 && (
+                  <div style={{ display: 'grid', gap: 12 }}>
+                    <Typography variant="h6" style={{ color: 'white' }}>Destination Preferences</Typography>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
+                      {["Beach", "City", "Mountains", "Historical Sites", "Adventure", "Nature & Wildlife"].map(item => {
+                        const picked = query.includes(item);
+                        return (
+                          <Button
+                            key={item}
+                            disabled={picked}
+                            onClick={() => ExtentQuestion(`I am interested in ${item}. `)}
+                            style={{
+                              flex: '1 1 45%',
+                              minWidth: 140,
+                              padding: '12px 14px',
+                              borderRadius: 12,
+                              background: picked ? '#27444a' : '#2575fc',
+                              color: 'white',
+                              textTransform: 'none'
+                            }}
+                          >
+                            {item}
+                          </Button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Q4: Accommodation */}
+                {step === 4 && (
+                  <div style={{ display: 'grid', gap: 12 }}>
+                    <Typography variant="h6" style={{ color: 'white' }}>Accommodation Preferences</Typography>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(140px,1fr))', gap: 12 }}>
+                      {["Business Travel", "Beach Resort", "Boutique Art Hotel", "Eco-Lodge", "Family-Friendly", "Budget-Friendly", "Luxury"].map(item => {
+                        const picked = query.includes(item);
+                        return (
+                          <Button
+                            key={item}
+                            disabled={picked}
+                            onClick={() => ExtentQuestion(`I prefer ${item}. `)}
+                            style={{
+                              padding: '12px 14px',
+                              borderRadius: 12,
+                              background: picked ? '#274a36' : '#27ae60',
+                              color: 'white',
+                              textTransform: 'none'
+                            }}
+                          >
+                            {item}
+                          </Button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Q5: Food */}
+                {step === 5 && (
+                  <div style={{ display: 'grid', gap: 12 }}>
+                    <Typography variant="h6" style={{ color: 'white' }}>Food Preferences</Typography>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
+                      {["Local Sri Lankan", "International", "Vegetarian", "Seafood", "Street Food"].map(item => {
+                        const picked = query.includes(item);
+                        return (
+                          <Button
+                            key={item}
+                            disabled={picked}
+                            onClick={() => ExtentQuestion(`I prefer ${item} cuisine. `)}
+                            style={{
+                              flex: '1 1 45%',
+                              minWidth: 140,
+                              padding: '12px 14px',
+                              borderRadius: 12,
+                              background: picked ? '#4a3b34' : '#ff884d',
+                              color: 'white',
+                              textTransform: 'none'
+                            }}
+                          >
+                            {item}
+                          </Button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Q6: Activities */}
+                {step === 6 && (
+                  <div style={{ display: 'grid', gap: 12 }}>
+                    <Typography variant="h6" style={{ color: 'white' }}>Activity Preferences</Typography>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
+                      {["Wildlife Safari", "Cultural Heritage", "Food & Culinary Tours", "Hiking & Nature Trails", "Water Sports", "Wellness"].map(item => {
+                        const picked = query.includes(item);
+                        return (
+                          <Button
+                            key={item}
+                            disabled={picked}
+                            onClick={() => ExtentQuestion(`I am interested in ${item}. `)}
+                            style={{
+                              flex: '1 1 45%',
+                              minWidth: 140,
+                              padding: '12px 14px',
+                              borderRadius: 12,
+                              background: picked ? '#3c2e48' : '#8e44ad',
+                              color: 'white',
+                              textTransform: 'none'
+                            }}
+                          >
+                            {item}
+                          </Button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Q7: Weather */}
+                {step === 7 && (
+                  <div style={{ display: 'grid', gap: 12 }}>
+                    <Typography variant="h6" style={{ color: 'white' }}>Weather Preferences</Typography>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(160px,1fr))', gap: 12 }}>
+                      {["Sunny & Warm", "Mild & Cool", "Avoid Rainy Areas", "Cloudy & Dry", "Cooler Temperature", "Warmer Temperature", "Moderate Temperature"].map(item => {
+                        const picked = query.includes(item);
+                        return (
+                          <Button
+                            key={item}
+                            disabled={picked}
+                            onClick={() => ExtentQuestion(`I prefer ${item} weather. `)}
+                            style={{
+                              padding: '12px 14px',
+                              borderRadius: 12,
+                              background: picked ? '#23313a' : '#34495e',
+                              color: 'white',
+                              textTransform: 'none'
+                            }}
+                          >
+                            {item}
+                          </Button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* ANSWER FIELD (visible text, no white bar) */}
+              <div style={{ padding: '0 22px 12px', background: 'transparent' }}>
+                <TextField
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  multiline
+                  rows={3}
+                  placeholder="Your selected preferences will appear here. You can edit or delete text."
+                  variant="outlined"
+                  fullWidth
+                  // style the Input container
+                  InputProps={{
+                    style: {
+                      background: 'rgba(255,255,255,0.08)',
+                      borderRadius: 12,
+                      border: '1px solid rgba(0,212,255,0.45)',
+                      padding: '8px 10px'
+                    }
+                  }}
+                  // style the actual input text (this is what fixes 'text not visible')
+                  inputProps={{
+                    style: {
+                      color: 'white',
+                      lineHeight: 1.5
+                    }
+                  }}
+                />
+              </div>
+
+              {/* NAVIGATION (transparent; buttons only) */}
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '12px 22px 22px',
+                background: 'transparent' // << important: no white band
+              }}>
+                {step !== 1 && (
+                  <Button
+                    onClick={handlePrev}
+                    disabled={step === 1}
+                    style={{
+                      border: '1px solid rgba(255,255,255,0.25)',
+                      color: 'white',
+                      borderRadius: 10,
+                      background: 'rgba(255,255,255,0.06)',
+                    }}
+                    className="button-responsive"
+                    sx={{
+                      fontSize: {
+                        xs: '0.7rem',  // Smaller font size for mobile (xs)
+                        sm: '0.7rem',      // Normal font size for tablets (sm)
+                        md: '0.8rem',    // Larger font size for desktops (md)
+                      }
+                    }}
+                  >
+                    ← Previous
+                  </Button>
+                )}
+
+
+                {step < 7 ? (
+                  (step === 1 && locations.length > 0) ||                 // Step 1: require location
+                    (step === 2 && startDate && endDate) ||     // Step 2: require both dates
+                    (step > 2) ?
+                    (<Button
+                      onClick={handleNext}
+                      style={{
+                        border: 'none',
+                        color: 'white',
+                        borderRadius: 10,
+                        background: 'linear-gradient(135deg, #4688ebff, #058075ff)'
+                      }}
+                      className="button-responsive"
+                      sx={{
+                        fontSize: {
+                          xs: '0.7rem',  // Smaller font size for mobile (xs)
+                          sm: '0.7rem',      // Normal font size for tablets (sm)
+                          md: '0.8rem',    // Larger font size for desktops (md)
+                        }
+                      }}
+                    >
+                      Next Step →
+                    </Button>
+                    ) : null
+                ) : (
+                  <Button
+                    onClick={handlePreferencesSubmit}
+                    style={{
+                      border: 'none',
+                      color: '#052b22',
+                      fontWeight: 700,
+                      borderRadius: 10,
+                      padding: '10px 18px',
+                      background: 'linear-gradient(135deg, #43e97b, #38f9d7)'
+                    }}
+                  >
+                    Finish ✔
+                  </Button>
+                )}
+              </div>
             </div>
           </Dialog>
+
 
 
 
@@ -744,16 +800,6 @@ const Home = () => {
               Please select a location and travel dates before submitting!
             </Alert>
           </Snackbar>
-
-
-
-          {/* <ButtonGroup variant="outlined" aria-label="Basic button group">
-            <Button onClick={() => setForm("01")}>Destination Preferences</Button>
-            <Button onClick={() => setForm("02")}>Accommodation Preferences</Button>
-            <Button onClick={() => setForm("03")}>Food Preferences</Button>
-            <Button onClick={() => setForm("04")}>Activity Preferences</Button>
-            <Button onClick={() => setForm("05")}>Weather Preferences</Button>
-          </ButtonGroup> */}
         </Box>
 
         {form !== "" && (
@@ -915,45 +961,7 @@ const Home = () => {
               </Paper>
             </Box>
           ) : null
-
-
         )}
-
-        {/* <QueryForm setChatContent={setChatContent} /> */}
-
-        {/* {chatHistory.map((item, idx) => (
-          <Box key={idx} sx={{ mb: 1 }}>
-            <Typography variant="body2" color={item.sender === "AI" ? "primary" : "secondary"}>
-              <strong>{item.sender}:</strong> {item.message}
-            </Typography>
-          </Box>
-        ))} */}
-
-        {/* <Box component="form" mt={3} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}> */}
-          {/* <TextField
-            label="Ask your question"
-            variant="outlined"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            fullWidth
-            InputProps={{
-              inputComponent: TextareaAutosize,
-              inputProps: { minRows: 2 }
-            }}
-          /> */}
-
-          {/* <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-            <Button
-              variant="contained"
-              onClick={handlePreferencesSubmit}
-              disabled={isLoading}
-            >
-              {isLoading ? <CircularProgress size={24} color="inherit" /> : "Submit"}
-            </Button>
-
-          </Box> */}
-        {/* </Box> */}
-
       </Box>
     </Container>
   );

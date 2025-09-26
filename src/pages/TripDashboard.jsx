@@ -69,7 +69,16 @@ const TripDashboard = () => {
     };
 
     const handleSendMessage = async () => {
+        console.log("handleSendMessage start");
+        
         if (!newMessage.trim()) return;
+        console.log("handleSendMessage end");
+        console.log("messages", messages);
+        console.log("newMessage", newMessage);
+        console.log("selectedLocations", selectedLocations);
+        console.log("location.state.start_date", location.state.start_date);
+        console.log("location.state.end_date", location.state.end_date);
+        console.log("likedPosts", likedPosts);
 
         const userMessage = {
             id: messages.length + 1,
@@ -169,7 +178,13 @@ const TripDashboard = () => {
                             backgroundColor: '#3498db',
                             '&:hover': { backgroundColor: '#2980b9' },
                             borderRadius: 2,
-                            px: 3
+                            px: 3,
+                            fontSize: '1rem',  // Adjusted font size
+                            padding: '10px 20px', // Adjust padding for better mobile experience
+                            '@media (max-width: 600px)': {
+                                fontSize: '0.9rem', // Smaller font size on mobile
+                                padding: '8px 16px', // Adjust padding on smaller screens
+                            },
                         }}
                     >
                         ← Plan Another Trip
@@ -178,7 +193,7 @@ const TripDashboard = () => {
 
                 <Grid container spacing={2}>
                     {/* Col 01 */}
-                    <Grid size={{ xs: 12, md: 6 }}>
+                    <Grid size={{ xs: 12, md: 6 }} >
                         <Paper
                             elevation={3}
                             sx={{
