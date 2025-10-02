@@ -88,6 +88,7 @@ const TripDashboard = () => {
         setMessages((prev) => [...prev, userMessage]);
 
         try {
+            setNewMessage('');
             const sessionId = "demo-session"; // or generate dynamically
             const response = await fetch(`http://127.0.0.1:8000/api/process_preferences/${sessionId}`, {
                 method: "POST",
@@ -120,7 +121,7 @@ const TripDashboard = () => {
             console.error("Error fetching AI response:", error);
         }
 
-        setNewMessage('');
+        
     };
 
 
